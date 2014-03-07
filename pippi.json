@@ -1,0 +1,14 @@
+{
+    "a0": 27.5, 
+    "session": "pippi.session", 
+    "name": "rotate_concourse", 
+    "quality": "major", 
+    "sounds": "sounds/", 
+    "orc": "orc/", 
+    "snapshots": "snapshots/",
+    "root": "b", 
+    "shortname": "rot", 
+    "bpm": 80.0, 
+    "device": "default",
+    "tune": "terry"
+}

@@ -1,0 +1,7 @@
+*.pyc
+*.tmp
+*.swp
+*.swo
+*.swn
+
+pippi.session
