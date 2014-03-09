@@ -8,6 +8,12 @@ create table config (
     value text
 );
 
+-- Arbitrary storage for params shared btwn voices 
+create table shared (
+    name text primary key,
+    value text
+);
+
 -- Currently running voices
 create table voices (
     id integer primary key,
