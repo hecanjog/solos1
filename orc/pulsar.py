@@ -3,14 +3,15 @@ from pippi import tune
 from pippic.settings import get_param as p
 from pippic.settings import voice as vp
 from pippic.settings import shared
-import pulsar_bot as bot
+import geodes as bot
 
 shortname   = 'pp'
 name        = 'pulsar'
 
 def play(voice_id):
     tel = bot.getTel()
-    if tel['name'] == 'sparse':
+
+    if 'sparse' in tel['name']:
         dsp.log('')
         dsp.log(voice_id + ' pulsar silent')
         bot.show_telemetry(tel)
@@ -36,7 +37,7 @@ def play(voice_id):
     root        = p(voice_id, 'root', 27.5)
     bpm         = p(voice_id, 'bpm', 80.0)
 
-    if tel['name'] == 'ballsout':
+    if 'ballsout' in tel['name']:
         length = int((1.0 / (tel['pace'] / 10.0)) * dsp.stf(3))
     else:
         length = int((1.0 / (tel['pace'] / 10.0)) * dsp.stf(2)) + dsp.stf(dsp.rand(0.25, 1))
@@ -65,7 +66,7 @@ def play(voice_id):
     #####################
     # SIREN
     ##################### 
-    if tel['name'] == 'ballsout': 
+    if 'ballsout' in tel['name']: 
         waveform = dsp.wavetable([0] + [ dsp.rand(-1, 1) for w in range(10) ] + [0], 512)
         window = dsp.wavetable([0] + [ dsp.rand(0, 1) for w in range(10) ] + [0], 512)
 
@@ -134,13 +135,13 @@ def play(voice_id):
 
     bar = dsp.randint(4, 8)
 
-    if tel['name'] == 'upbeat':
+    if 'upbeat' in tel['name']:
         numbeats = bar * dsp.randint(4, 8)
 
     while outlen < length:
         layers = []
 
-        if tel['name'] == 'upbeat':
+        if 'upbeat' in tel['name']:
             plen = beat / dsp.randint(1, 8)
         else:
             plen = dsp.mstf(dsp.rand(minplen, maxplen))
@@ -151,7 +152,7 @@ def play(voice_id):
             maxo = 1
 
 
-        if tel['name'] == 'upbeat':
+        if 'upbeat' in tel['name']:
             freqs = dsp.randshuffle(freqs)
             for b in range(numbeats):
                 f = freqs[b % len(freqs)] 
@@ -166,9 +167,9 @@ def play(voice_id):
 
         else:
             for iff, freq in enumerate(freqs):
-                if tel['name'] == 'gentle':
+                if 'gentle' in tel['name']:
                     volume = dsp.rand(0.5, 0.7)
-                elif tel['name'] == 'upbeat':
+                elif 'upbeat' in tel['name']:
                     volume = dsp.rand(0.5, 0.75)
                 else:
                     volume = dsp.rand(0.4, 0.6)

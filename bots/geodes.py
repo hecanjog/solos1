@@ -47,35 +47,35 @@ def make_point(zone, i):
 def make_telemetry():
     zones = [
         {
-            'name': 'sparse',
+            'name': ['sparse'],
             'register': (7, 10),
             'density': (1, 2),
             'harmonicity': (1, 10),
             'roughness': (1, 5),
             'pace': (1, 3)
         }, {
-            'name': 'gentle',
+            'name': ['gentle'],
             'register': (3, 7),
             'density': (3, 6),
             'harmonicity': (8, 10),
             'roughness': (1, 2),
             'pace': (1, 3)
         }, {
-            'name': 'full',
+            'name': ['full'],
             'register': (3, 7),
             'density': (4, 8),
             'harmonicity': (9, 10),
             'roughness': (2, 5),
             'pace': (3, 5)
         }, {
-            'name': 'ballsout',
+            'name': ['ballsout'],
             'register': (1, 10),
             'density': (8, 10),
             'harmonicity': (1, 10),
             'roughness': (8, 10),
             'pace': (3, 10)
         }, {
-            'name': 'upbeat',
+            'name': ['upbeat'],
             'register': (5, 8),
             'density': (5, 8),
             'harmonicity': (8, 10),
@@ -85,13 +85,34 @@ def make_telemetry():
     ]
 
     dsp.log('generating telemetry...')
+
+    numsections = dsp.randint(6, 12)
     sections = []
 
-    zones *= 6
-    zones = dsp.randshuffle(zones)
+    for s in range(numsections):
+        zone = dsp.randchoose(zones)
+        section = make_section(zone)
+        sections += section
 
-    for zone in zones:
-        sections += make_section(zone)
+        # Transition
+        if dsp.rand(0, 100) > 50:
+            next_zone = dsp.randchoose(zones)
+            next_section = make_section(next_zone)
+
+            transition_zone = {
+                'name': [section[-1]['name'][0], next_section[0]['name']][0],
+                'register': (section[-1]['register'], next_section[0]['register']),
+                'density': (section[-1]['density'], next_section[0]['density']),
+                'harmonicity': (section[-1]['harmonicity'], next_section[0]['harmonicity']),
+                'roughness': (section[-1]['roughness'], next_section[0]['roughness']),
+                'pace': (section[-1]['pace'], next_section[0]['pace']),
+            }
+
+            transition_section = make_section(transition_zone)
+
+            sections += transition_section
+            sections += next_section
+
 
     dsp.log('telemetry generated')
     settings.shared('tel', sections)
@@ -163,7 +184,7 @@ def show_telemetry(tel):
             color = 'white'
 
         if k == 'name':
-            output += [ colored(v.upper(), color) ]
+            output += [ colored(' '.join(v), color) ]
         else:
             output += [ colored('%s: %.2f' % (k[:3], v), color) ]
 
@@ -173,4 +194,6 @@ def show_telemetry(tel):
 def getTel():
     tel = json.loads(settings.shared('tel'))
     count = int(settings.shared('count'))
-    return tel[count % len(tel)]
+    tel = tel[count % len(tel)]
+
+    return tel

@@ -1,17 +1,16 @@
 from pippi import dsp
 from pippic import settings as s
-import pulsar_bot as bot
+import geodes as bot
 
 shortname   = 'ch'
 name        = 'chirp'
 
 def play(voice_id):
     tel = bot.getTel()
-    section = tel['name']
 
     bpm = s.config('bpm')
 
-    if section == 'gentle' or section == 'upbeat' or section == 'full':
+    if 'gentle' in tel['name'] or 'upbeat' in tel['name'] or 'full' in tel['name']:
         dsp.log('')
         dsp.log(voice_id + ' chirps silent')
         return dsp.pad('', 0, dsp.stf(dsp.rand(1, 10)))
@@ -21,7 +20,7 @@ def play(voice_id):
     def makecurve(length):
         # freq, length, pulsewidth, waveform, window, mod, modRange, modFreq, amp
 
-        if section == 'sparse':
+        if 'sparse' in tel['name']:
             wf = dsp.breakpoint([0] + [ dsp.rand(-1, 1) for i in range(int(dsp.rand(5, 10))) ] + [0], 1024)
             win = dsp.breakpoint([0] + [ dsp.rand(0, 1) for i in range(4) ] + [0], 1024)
             mod = dsp.breakpoint([ dsp.rand(0, 1) for i in range(int(dsp.rand(4, 8))) ], 1024)
@@ -39,7 +38,7 @@ def play(voice_id):
 
             pw = dsp.rand(0.1, 1.0)
 
-        if section == 'upbeat':
+        if 'upbeat' in tel['name']:
             wf = dsp.breakpoint([0] + [ dsp.rand(-1, 1) for i in range(int(dsp.rand(5, 10))) ] + [0], 1024)
             win = dsp.breakpoint([0] + [ dsp.rand(0, 1) for i in range(4) ] + [0], 1024)
             mod = dsp.breakpoint([ dsp.rand(0, 1) for i in range(int(dsp.rand(5, 80))) ], 1024)
@@ -53,7 +52,7 @@ def play(voice_id):
 
             pw = 1.0
 
-        if section == 'ballsout':
+        if 'ballsout' in tel['name']:
             wf = dsp.breakpoint([0] + [ dsp.rand(-1, 1) for i in range(int(dsp.rand(10, 30))) ] + [0], 1024)
             win = dsp.breakpoint([0] + [ dsp.rand(0, 1) for i in range(10) ] + [0], 1024)
             mod = dsp.breakpoint([ dsp.rand(0, 1) for i in range(int(dsp.rand(20, 100))) ], 1024)
@@ -75,13 +74,13 @@ def play(voice_id):
         ngrains = len(c)
         pans = dsp.breakpoint([ dsp.rand(0,1) for i in range(100) ], ngrains)
 
-        if section == 'sparse':
+        if 'sparse' in tel['name']:
             c = dsp.vsplit(c, dsp.mstf(0.5), dsp.mstf(6))
             c = [ dsp.randchoose(c) for i in range(int(dsp.rand(3, 10))) ]
 
             maxPad = dsp.randint(2000, 4000)
 
-        if section == 'ballsout':
+        if 'ballsout' in tel['name']:
             c = dsp.vsplit(c, dsp.mstf(0.1), dsp.mstf(30))
             c = dsp.packet_shuffle(c, 10)
             maxPad = dsp.randint(0, 100)
@@ -100,7 +99,7 @@ def play(voice_id):
                     c[ic] = dsp.pad('', 0, dsp.flen(cc))
 
 
-        if section == 'upbeat':
+        if 'upbeat' in tel['name']:
             beat = dsp.bpm2frames(bpm)
             c = dsp.split(c, beat)
 
@@ -111,7 +110,7 @@ def play(voice_id):
         c = [ dsp.pan(cg, pans[i]) for i, cg in enumerate(c) ]
         c = [ dsp.env(cg, 'sine') for i, cg in enumerate(c) ]
 
-        if section == 'sparse' or section == 'ballsout':
+        if 'sparse' in tel['name'] or 'ballsout' in tel['name']:
             speeds = dsp.breakpoint([ dsp.rand(0.5, 1.99) for i in range(100) ], ngrains)
             c = [ cg * dsp.randint(1, int(tel['density'])) for cg in c ]
             c = [ dsp.transpose(cg, speeds[i]) for i, cg in enumerate(c) ]
