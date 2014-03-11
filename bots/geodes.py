@@ -100,7 +100,7 @@ def make_telemetry():
             next_section = make_section(next_zone)
 
             transition_zone = {
-                'name': [section[-1]['name'][0], next_section[0]['name']][0],
+                'name': ['transition', section[-1]['name'][0], next_section[0]['name'][0]],
                 'register': (section[-1]['register'], next_section[0]['register']),
                 'density': (section[-1]['density'], next_section[0]['density']),
                 'harmonicity': (section[-1]['harmonicity'], next_section[0]['harmonicity']),
