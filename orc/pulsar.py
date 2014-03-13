@@ -130,13 +130,13 @@ def play(voice_id):
 
     bar = dsp.randint(4, 8)
 
-    if tel['density'] > 5:
+    if tel['density'] > 6:
         numbeats = bar * dsp.randint(4, 8)
 
     while outlen < length:
         layers = []
 
-        if tel['density'] > 5:
+        if tel['density'] > 6:
             plen = beat / dsp.randint(1, 8)
         else:
             plen = dsp.mstf(dsp.rand(minplen, maxplen))
@@ -146,7 +146,7 @@ def play(voice_id):
         else:
             maxo = 1
 
-        if tel['density'] > 5:
+        if tel['density'] > 6:
             freqs = dsp.randshuffle(freqs)
             for b in range(numbeats):
                 f = freqs[b % len(freqs)] 

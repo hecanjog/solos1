@@ -86,7 +86,7 @@ def make_telemetry():
 
     dsp.log('generating telemetry...')
 
-    numsections = dsp.randint(6, 12)
+    numsections = dsp.randint(3, 12)
     sections = []
 
     for s in range(numsections):
@@ -140,7 +140,7 @@ def run(gens, tick):
                 dsp.log('stopping voice %s' % voice_id)
                 settings.voice(voice_id, 'loop', 0)
 
-    for w in range(10):
+    for w in range(15):
         # Spawn worker
         worker_process = mp.Process(name='worker', target=worker, args=(gens, tick))
         worker_process.start()
