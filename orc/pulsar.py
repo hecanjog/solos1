@@ -11,7 +11,7 @@ name        = 'pulsar'
 def play(voice_id):
     tel = bot.getTel()
 
-    if 'sparse' in tel['name']:
+    if 'sparse' in tel['name'] or 'ballsout' in tel['name']:
         dsp.log('')
         dsp.log(voice_id + ' pulsar silent')
         bot.show_telemetry(tel)
@@ -22,13 +22,13 @@ def play(voice_id):
     ##################### 
     volume = dsp.rand(0.4, 0.7)
 
-    melodies = [dsp.randchoose(['c', 'e', 'g', 'a'])]
+    melodies = [dsp.randchoose(['c', 'g', 'a'])]
 
     if tel['density'] >= 4:
-        melodies += [ [ dsp.randchoose(['c', 'e', 'g', 'a']) for i in range(2) ] for m in range(dsp.randint(2, 4)) ]
+        melodies += [ [ dsp.randchoose(['c', 'g', 'a']) for i in range(2) ] for m in range(dsp.randint(2, 4)) ]
 
     if tel['density'] >= 6:
-        melodies += [ [ dsp.randchoose(['c', 'd', 'e', 'f', 'g', 'a']) for i in range(dsp.randint(3, 6)) ] for m in range(dsp.randint(2, 5)) ]
+        melodies += [ [ dsp.randchoose(['c', 'd', 'e', 'g', 'a']) for i in range(dsp.randint(3, 6)) ] for m in range(dsp.randint(2, 5)) ]
 
     notes = dsp.randchoose(melodies)
 
@@ -40,7 +40,7 @@ def play(voice_id):
     if 'ballsout' in tel['name']:
         length = int((1.0 / (tel['pace'] / 10.0)) * dsp.stf(3))
     else:
-        length = int((1.0 / (tel['pace'] / 10.0)) * dsp.stf(2)) + dsp.stf(dsp.rand(0.25, 1))
+        length = int((1.0 / (tel['pace'] / 10.0)) * dsp.stf(4)) + dsp.stf(dsp.rand(0.25, 1))
 
     # Cap voice length at 60 secs
     if length > dsp.stf(60):
@@ -51,7 +51,7 @@ def play(voice_id):
     mod         = p(voice_id, 'mod', 'random')
     modFreq     = p(voice_id, 'modfreq', dsp.rand(1.0, 2.5) / dsp.fts(length))
 
-    modRange    = p(voice_id, 'speed', 0.02)
+    modRange    = p(voice_id, 'speed', 0.01)
     modRange    = dsp.rand(0, modRange)
 
     pulsewidth = 1.0 / (tel['roughness'] / 10.0)
@@ -60,7 +60,7 @@ def play(voice_id):
     beat = dsp.bpm2frames(bpm)
 
     tune.a0 = float(root)
-    freqs   = [ tune.ntf(note, octave) for note in notes ]
+    freqs   = [ tune.ntf(note, octave, ratios=tune.just) for note in notes ]
 
 
     #####################
@@ -122,11 +122,6 @@ def play(voice_id):
     window = dsp.wavetable(window, 512)
     waveform = dsp.wavetable(waveform, 512)
 
-    ffc = []
-    for freq in freqs:
-        fffF = freq * dsp.rand(0.98, 1.03)
-        ffc += [ dsp.breakpoint([ dsp.rand(freq, fffF) for i in range(50) ], numgrains) ]
-
     pc = dsp.breakpoint([ dsp.rand(0, 1) for i in range(int(dsp.rand(5, numgrains))) ], numgrains)
 
     out = ''
@@ -135,13 +130,13 @@ def play(voice_id):
 
     bar = dsp.randint(4, 8)
 
-    if 'upbeat' in tel['name']:
+    if tel['density'] > 5:
         numbeats = bar * dsp.randint(4, 8)
 
     while outlen < length:
         layers = []
 
-        if 'upbeat' in tel['name']:
+        if tel['density'] > 5:
             plen = beat / dsp.randint(1, 8)
         else:
             plen = dsp.mstf(dsp.rand(minplen, maxplen))
@@ -151,8 +146,7 @@ def play(voice_id):
         else:
             maxo = 1
 
-
-        if 'upbeat' in tel['name']:
+        if tel['density'] > 5:
             freqs = dsp.randshuffle(freqs)
             for b in range(numbeats):
                 f = freqs[b % len(freqs)] 
@@ -174,8 +168,10 @@ def play(voice_id):
                 else:
                     volume = dsp.rand(0.4, 0.6)
 
-                f = ffc[iff][count % len(ffc[iff])] * 2**int(dsp.rand(0, maxo))
-                layer = dsp.pulsar(f, plen, pulsewidth, waveform, window, mod, modRange, modFreq, volume)
+                if dsp.rand(0, 100) > 70:
+                    freq *= 2**int(dsp.rand(0, maxo))
+
+                layer = dsp.pulsar(freq, plen, pulsewidth, waveform, window, mod, modRange, modFreq, volume)
 
                 layer = dsp.env(layer, 'sine')
                 layer = dsp.pan(layer, dsp.rand())
@@ -189,6 +185,10 @@ def play(voice_id):
             count += 1
 
     out = dsp.env(out, 'sine')
+
+    dsp.log((tel['harmonicity'] - 10) * -0.5)
+    #if dsp.flen(out) > dsp.mstf(100):
+        #out = dsp.drift(out, (tel['harmonicity'] - 10.0) * -1 * 0.02)
 
     dsp.log('')
     dsp.log('pulsar')

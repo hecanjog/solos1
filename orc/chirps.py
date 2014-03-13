@@ -10,45 +10,30 @@ def play(voice_id):
 
     bpm = s.config('bpm')
 
-    if 'gentle' in tel['name'] or 'upbeat' in tel['name'] or 'full' in tel['name']:
-        dsp.log('')
-        dsp.log(voice_id + ' chirps silent')
-        return dsp.pad('', 0, dsp.stf(dsp.rand(1, 10)))
+    #if 'gentle' in tel['name'] or 'upbeat' in tel['name'] or 'full' in tel['name']:
+        #dsp.log('')
+        #dsp.log(voice_id + ' chirps silent')
+        #return dsp.pad('', 0, dsp.stf(dsp.rand(1, 10)))
 
     length = int((1.0 / (tel['pace'] / 10.0)) * dsp.stf(3))
 
     def makecurve(length):
         # freq, length, pulsewidth, waveform, window, mod, modRange, modFreq, amp
 
-        if 'sparse' in tel['name']:
-            wf = dsp.breakpoint([0] + [ dsp.rand(-1, 1) for i in range(int(dsp.rand(5, 10))) ] + [0], 1024)
-            win = dsp.breakpoint([0] + [ dsp.rand(0, 1) for i in range(4) ] + [0], 1024)
-            mod = dsp.breakpoint([ dsp.rand(0, 1) for i in range(int(dsp.rand(4, 8))) ], 1024)
+        wf = dsp.breakpoint([0] + [ dsp.rand(-1, 1) for i in range(int(dsp.rand(5, 10))) ] + [0], 1024)
+        win = dsp.breakpoint([0] + [ dsp.rand(0, 1) for i in range(4) ] + [0], 1024)
+        mod = dsp.breakpoint([ dsp.rand(0, 1) for i in range(int(dsp.rand(4, 8))) ], 1024)
 
-            freq = dsp.rand(5000, 8000)
-            freq = tel['register'] * 1000 * dsp.rand(0.9, 1.1) 
+        smaxamp = dsp.rand(0.65, 0.95)
+        amp = dsp.rand(0.01, smaxamp)
 
-            modR = dsp.rand(0.5, 1.5)
-            modF = 1.0 / dsp.fts(length)
-            modR = tel['harmonicity'] * 30
-            modF= tel['pace'] / 5.0
-
-            smaxamp = dsp.rand(3, 5)
-            amp = dsp.rand(0.75, smaxamp)
-
-            pw = dsp.rand(0.1, 1.0)
+        pw = dsp.rand(0.1, 1.0)
 
         if 'upbeat' in tel['name']:
             wf = dsp.breakpoint([0] + [ dsp.rand(-1, 1) for i in range(int(dsp.rand(5, 10))) ] + [0], 1024)
             win = dsp.breakpoint([0] + [ dsp.rand(0, 1) for i in range(4) ] + [0], 1024)
             mod = dsp.breakpoint([ dsp.rand(0, 1) for i in range(int(dsp.rand(5, 80))) ], 1024)
 
-            freq = tel['register'] * 1000 * dsp.rand(0.9, 1.1) 
-
-            modR = tel['harmonicity'] * 30
-            modF= tel['pace'] / 5.0
-
-            amp = dsp.rand(0.3, 0.5)
 
             pw = 1.0
 
@@ -57,49 +42,40 @@ def play(voice_id):
             win = dsp.breakpoint([0] + [ dsp.rand(0, 1) for i in range(10) ] + [0], 1024)
             mod = dsp.breakpoint([ dsp.rand(0, 1) for i in range(int(dsp.rand(20, 100))) ], 1024)
 
-            freq = tel['register'] * 1000 * dsp.rand(0.9, 1.1) 
 
-            modR = tel['harmonicity'] * 30
-            modF= tel['pace'] / 5.0
+        #if 'sparse' in tel['name']:
+            #amp = dsp.rand(0.7, 3)
 
-            #modR = dsp.rand(0.5, 1.5)
-            #modF = 1.0 / dsp.fts(length)
+        freq = tel['register'] * tel['roughness'] * (tel['density'] * tel['pace'] * 0.25)
 
-            amp = dsp.rand(0.3, 0.8)
-
-            pw = 1.0
+        modR = tel['harmonicity']
+        modF= tel['pace'] / 10.0
 
         c = dsp.pulsar(freq, length, pw, wf, win, mod, modR, modF, amp)
 
         ngrains = len(c)
         pans = dsp.breakpoint([ dsp.rand(0,1) for i in range(100) ], ngrains)
 
+        maxPad = dsp.randint(2000, 4000)
+
         if 'sparse' in tel['name']:
-            c = dsp.vsplit(c, dsp.mstf(0.5), dsp.mstf(6))
+            c = dsp.vsplit(c, dsp.mstf(0.5), dsp.mstf(tel['density'] * tel['harmonicity'] * tel['roughness'] * tel['pace']))
             c = [ dsp.randchoose(c) for i in range(int(dsp.rand(3, 10))) ]
 
-            maxPad = dsp.randint(2000, 4000)
+        elif 'ballsout' in tel['name']:
+            c = dsp.vsplit(c, dsp.mstf(0.1), dsp.mstf(400))
+            c = dsp.packet_shuffle(c, dsp.randint(5, 10))
 
-        if 'ballsout' in tel['name']:
-            c = dsp.vsplit(c, dsp.mstf(0.1), dsp.mstf(30))
-            c = dsp.packet_shuffle(c, 10)
-            maxPad = dsp.randint(0, 100)
-
-            speeds = dsp.breakpoint([ dsp.rand(0.5, 1.99) for i in range(100) ], ngrains)
+            speeds = dsp.breakpoint([ dsp.rand(tel['register'] * 0.1 + 0.2, tel['register'] + 0.2) for i in range(100) ], ngrains)
 
             c = [ dsp.transpose(cg, speeds[i]) for i, cg in enumerate(c) ]
-            c = [ dsp.amp(cg, dsp.rand(0.25, 5.0)) for i, cg in enumerate(c) ]
+            #c = [ dsp.amp(cg, dsp.rand(0.25, 1.25)) for i, cg in enumerate(c) ]
 
             for ic, cc in enumerate(c):
                 if dsp.rand(0, 100) > 70:
                     c[ic] = dsp.tone(dsp.flen(cc), 11000, amp=0.5)
 
-            for ic, cc in enumerate(c):
-                if dsp.rand(0, 100) > 50:
-                    c[ic] = dsp.pad('', 0, dsp.flen(cc))
-
-
-        if 'upbeat' in tel['name']:
+        elif 'upbeat' in tel['name']:
             beat = dsp.bpm2frames(bpm)
             c = dsp.split(c, beat)
 
@@ -107,22 +83,36 @@ def play(voice_id):
 
             c = [ dsp.pad(cg, 0, dsp.mstf(dsp.rand(10, beat / 4))) for i, cg in enumerate(c) ]
 
+        else:
+            c = dsp.vsplit(c, dsp.mstf(10), dsp.mstf(tel['density'] * tel['harmonicity'] * tel['roughness'] * tel['pace'] * dsp.rand(1, 10)))
+
         c = [ dsp.pan(cg, pans[i]) for i, cg in enumerate(c) ]
         c = [ dsp.env(cg, 'sine') for i, cg in enumerate(c) ]
 
         if 'sparse' in tel['name'] or 'ballsout' in tel['name']:
             speeds = dsp.breakpoint([ dsp.rand(0.5, 1.99) for i in range(100) ], ngrains)
-            c = [ cg * dsp.randint(1, int(tel['density'])) for cg in c ]
+            
+            for ic, cc in enumerate(c):
+                if dsp.flen(cc) < dsp.mstf(100):
+                    c[ic] = cc + ''.join([ dsp.amp(cc, dsp.rand(0.1, 1.0)) for buh in range(dsp.randint(1, int(tel['density']))) ])
+
             c = [ dsp.transpose(cg, speeds[i]) for i, cg in enumerate(c) ]
             c = [ dsp.pan(cg, dsp.rand(0.0, 1.0)) for i, cg in enumerate(c) ]
 
-        c = [ dsp.pad(cg, 0, dsp.mstf(dsp.rand(10, maxPad))) for i, cg in enumerate(c) ]
+        if 'ballsout' not in tel['name']:
+            c = [ dsp.pad(cg, 0, dsp.mstf(dsp.rand(10, maxPad))) for i, cg in enumerate(c) ]
 
         out = ''.join(c)
 
         return out
 
     out = makecurve(length)
+
+    if dsp.flen(out) > dsp.mstf(100) and dsp.rand(0, 100) > 0.5:
+        out = dsp.drift(out, (tel['harmonicity'] - 10.0) * -1 * 0.2, dsp.randint(41, 441))
+
+    if dsp.flen(out) > dsp.stf(20):
+        out = dsp.fill(out, dsp.stf(20))
 
     dsp.log('')
     dsp.log('chirp')

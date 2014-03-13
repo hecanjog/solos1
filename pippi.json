@@ -9,6 +9,6 @@
     "root": "b", 
     "shortname": "rot", 
     "bpm": 80.0, 
-    "device": "default",
+    "device": "T6_pair1",
     "tune": "terry"
 }

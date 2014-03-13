@@ -24,7 +24,7 @@ def mc(r, numpoints):
     return dsp.breakpoint([ dsp.rand(r[0], r[1]) for i in range(numlands) ], numpoints)
 
 def make_section(zone):
-    numpoints = dsp.randint(28, 48)
+    numpoints = dsp.randint(12, 48)
 
     zone['register'] = mc(zone['register'], numpoints)
     zone['density'] = mc(zone['density'], numpoints)
@@ -56,28 +56,28 @@ def make_telemetry():
         }, {
             'name': ['gentle'],
             'register': (3, 7),
-            'density': (3, 6),
+            'density': (3, 8),
             'harmonicity': (8, 10),
             'roughness': (1, 2),
             'pace': (1, 3)
         }, {
             'name': ['full'],
-            'register': (3, 7),
-            'density': (4, 8),
+            'register': (5, 7),
+            'density': (4, 6),
             'harmonicity': (9, 10),
             'roughness': (2, 5),
             'pace': (3, 5)
         }, {
             'name': ['ballsout'],
             'register': (1, 10),
-            'density': (8, 10),
+            'density': (2, 10),
             'harmonicity': (1, 10),
-            'roughness': (8, 10),
+            'roughness': (4, 10),
             'pace': (3, 10)
         }, {
             'name': ['upbeat'],
             'register': (5, 8),
-            'density': (5, 8),
+            'density': (1, 8),
             'harmonicity': (8, 10),
             'roughness': (2, 4),
             'pace': (4, 7)
@@ -95,7 +95,7 @@ def make_telemetry():
         sections += section
 
         # Transition
-        if dsp.rand(0, 100) > 50:
+        if dsp.rand(0, 100) > 30:
             next_zone = dsp.randchoose(zones)
             next_section = make_section(next_zone)
 
@@ -120,46 +120,30 @@ def make_telemetry():
 def run(gens, tick):
     dsp.log('telemetry up!')
 
-    # Gradually start voices
-    for i in range(5):
-        if i > 0:
-            dsp.delay(dsp.stf(dsp.rand(10, 20)))
-
-        voice_id, generator_name = settings.add_voice('ch re qu')
-        dsp.log('starting click voice %s' % voice_id)
-
-        playback_process = mp.Process(name=voice_id, target=rt.out, args=(gens[generator_name], tick))
-        playback_process.start()
-
-        dsp.delay(dsp.stf(dsp.rand(10, 20)))
-
-        voice_id, generator_name = settings.add_voice('pp re qu')
-        dsp.log('starting pulsar voice %s' % voice_id)
-
-        playback_process = mp.Process(name=voice_id, target=rt.out, args=(gens[generator_name], tick))
-        playback_process.start()
-
     def worker(gens, tick):
         while True:
-            dsp.delay(dsp.stf(dsp.rand(45, 60)))
+            dsp.delay(dsp.stf(dsp.rand(2, 20)))
 
-            voice_id, generator_name = settings.add_voice('pp re')
-            dsp.log('starting tmp voice %s' % voice_id)
+            if dsp.rand(0, 100) > 50:
+                if dsp.rand(0, 100) > 35:
+                    voice_id, generator_name = settings.add_voice('pp re qu')
+                    dsp.log('starting pulsar voice %s' % voice_id)
+                else:
+                    voice_id, generator_name = settings.add_voice('ch re qu')
+                    dsp.log('starting chirp voice %s' % voice_id)
 
-            playback_process = mp.Process(name=voice_id, target=rt.out, args=(gens[generator_name], tick))
-            playback_process.start()
+                playback_process = mp.Process(name=voice_id, target=rt.out, args=(gens[generator_name], tick))
+                playback_process.start()
 
-            dsp.delay(dsp.stf(dsp.rand(60, 90)))
+                dsp.delay(dsp.stf(dsp.rand(6, 20)))
 
-            dsp.log('stopping tmp voice %s' % voice_id)
-            settings.voice(voice_id, 'loop', 0)
+                dsp.log('stopping voice %s' % voice_id)
+                settings.voice(voice_id, 'loop', 0)
 
-    # Spawn worker
-    worker_process = mp.Process(name='worker', target=worker, args=(gens, tick))
-    worker_process.start()
-
-    # Start countdown - after N minutes, stop voices one by one
-
+    for w in range(10):
+        # Spawn worker
+        worker_process = mp.Process(name='worker', target=worker, args=(gens, tick))
+        worker_process.start()
 
 def show_telemetry(tel):
     output = [] 
