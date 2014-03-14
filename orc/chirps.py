@@ -111,7 +111,7 @@ def play(voice_id):
     out = makecurve(length)
 
     if dsp.flen(out) > dsp.mstf(100) and dsp.rand(0, 100) > 20:
-        out = dsp.drift(out, (tel['harmonicity'] - 10.0) * -1 * 0.2, dsp.randint(41, 441))
+        out = dsp.drift(out, (tel['harmonicity'] - 10.0) * -1 * 0.1, dsp.randint(41, 441))
 
     if dsp.flen(out) > dsp.stf(10):
         out = dsp.fill(out, dsp.stf(10))

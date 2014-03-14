@@ -25,7 +25,7 @@ def mc(r, numpoints):
     return dsp.breakpoint([ dsp.rand(r[0], r[1]) for i in range(numlands) ], numpoints)
 
 def make_section(zone):
-    numpoints = dsp.randint(20, 30)
+    numpoints = dsp.randint(10, 30)
 
     zone['register'] = mc(zone['register'], numpoints)
     zone['density'] = mc(zone['density'], numpoints)
@@ -128,16 +128,14 @@ def run(gens, tick):
         while time.time() < started + (60 * 15):
             dsp.delay(dsp.stf(dsp.rand(2, 20)))
 
-            if dsp.rand(0, 100) > 50:
+            if dsp.rand(0, 100) > 30:
                 if dsp.rand(0, 100) > 35:
                     voice_id, generator_name = settings.add_voice('pp re qu')
+                    dsp.log('')
                     dsp.log('starting pulsar voice %s' % voice_id)
                 else:
-                    if dsp.rand(0, 100) > 50:
-                        voice_id, generator_name = settings.add_voice('ch re qu')
-                    else:
-                        voice_id, generator_name = settings.add_voice('ch qu')
-
+                    voice_id, generator_name = settings.add_voice('ch re qu')
+                    dsp.log('')
                     dsp.log('starting chirp voice %s' % voice_id)
 
                 playback_process = mp.Process(name=voice_id, target=rt.out, args=(gens[generator_name], tick))
@@ -145,10 +143,11 @@ def run(gens, tick):
 
                 dsp.delay(dsp.stf(dsp.rand(6, 35)))
 
+                dsp.log('')
                 dsp.log('stopping voice %s' % voice_id)
                 settings.voice(voice_id, 'loop', 0)
 
-    for w in range(10):
+    for w in range(4):
         # Spawn worker
         worker_process = mp.Process(name='worker', target=worker, args=(gens, tick))
         worker_process.start()

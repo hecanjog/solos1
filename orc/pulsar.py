@@ -11,11 +11,11 @@ name        = 'pulsar'
 def play(voice_id):
     tel = bot.getTel()
 
-    if 'sparse' in tel['name'] or 'ballsout' in tel['name']:
+    if 'sparse' in tel['name'] or 'ballsout' in tel['name'] and dsp.rand(0, 100) > 70:
         dsp.log('')
         dsp.log(voice_id + ' pulsar silent')
         bot.show_telemetry(tel)
-        return dsp.pad('', 0, dsp.stf(dsp.rand(1, 10)))
+        #return dsp.pad('', 0, dsp.stf(dsp.rand(1, 10)))
 
     #####################
     # PARAMS 
@@ -25,10 +25,10 @@ def play(voice_id):
     melodies = [[dsp.randchoose([1, 5, 6])]]
 
     if tel['density'] >= 4:
-        melodies += [ [ dsp.randchoose([1, 5, 6]) for i in range(2) ] for m in range(dsp.randint(2, 4)) ]
+        melodies += [ [ dsp.randchoose([1, 2, 9, 5, 6]) for i in range(2) ] for m in range(dsp.randint(2, 4)) ]
 
     if tel['density'] >= 6:
-        melodies += [ [ dsp.randchoose([1, 2, 3, 5, 6]) for i in range(dsp.randint(3, 6)) ] for m in range(dsp.randint(2, 5)) ]
+        melodies += [ [ dsp.randchoose([1, 2, 9, 3, 4, 5, 6, 7]) for i in range(dsp.randint(3, 6)) ] for m in range(dsp.randint(2, 5)) ]
 
     try:
         notes = dsp.randchoose(melodies)
@@ -36,7 +36,7 @@ def play(voice_id):
         dsp.log(melodies)
         notes = [1]
 
-    octave = int(round((tel['register'] / 10.0) * 4 + 1))
+    octave = int(round((tel['register'] / 10.0) * dsp.randint(1, 3) + 1))
 
     bpm         = p(voice_id, 'bpm', 80.0)
 
@@ -111,16 +111,16 @@ def play(voice_id):
 
     bar = dsp.randint(4, 8)
 
-    dobeats = dsp.rand(0, 100) > 10
+    dobeats = tel['density'] > 5.5 and dsp.rand(0, 100) > 10
 
-    if tel['density'] > 4 and dobeats:
-        numbeats = bar * dsp.randint(4, 8)
+    if dobeats:
+        numbeats = bar * dsp.randint(3, 7)
 
     while outlen < length:
         layers = []
 
-        if tel['density'] > 4 and dobeats:
-            plen = beat / dsp.randint(2, 8)
+        if dobeats:
+            plen = beat / dsp.randint(1, 10)
         else:
             plen = dsp.mstf(dsp.rand(minplen, maxplen))
 
@@ -129,7 +129,7 @@ def play(voice_id):
         else:
             maxo = 1
 
-        if tel['density'] > 4 and dobeats:
+        if dobeats:
             freqs = dsp.randshuffle(freqs)
             for b in range(numbeats):
                 f = freqs[b % len(freqs)] 
@@ -145,11 +145,13 @@ def play(voice_id):
         else:
             for iff, freq in enumerate(freqs):
                 if 'gentle' in tel['name']:
-                    volume = dsp.rand(0.5, 1)
-                elif 'upbeat' in tel['name']:
-                    volume = dsp.rand(0.5, 0.9)
+                    volume = dsp.rand(0.5, 0.85)
+                elif 'sparse' in tel['name']:
+                    volume = dsp.rand(0.3, 0.6)
+                elif 'upbeat' in tel['name'] or 'ballsout' in tel['name']:
+                    volume = dsp.rand(0.5, 0.7)
                 else:
-                    volume = dsp.rand(0.4, 0.8)
+                    volume = dsp.rand(0.4, 0.7)
 
                 if dsp.rand(0, 100) > 60:
                     freq *= 2**dsp.randint(0, maxo)
@@ -169,8 +171,8 @@ def play(voice_id):
 
     out = dsp.env(out, 'sine')
 
-    if dsp.flen(out) > dsp.mstf(100) and dsp.rand(0, 100) > 50:
-        out = dsp.drift(out, (tel['harmonicity'] - 10.0) * -1 * 0.03, dsp.randint(41, 441))
+    #if dsp.flen(out) > dsp.mstf(100) and dsp.rand(0, 100) > 50:
+        #out = dsp.drift(out, (tel['harmonicity'] - 10.0) * -1 * 0.02, dsp.randint(41, 441))
 
     dsp.log('')
     dsp.log('pulsar')
