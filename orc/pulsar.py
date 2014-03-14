@@ -22,19 +22,22 @@ def play(voice_id):
     ##################### 
     volume = dsp.rand(0.4, 0.7)
 
-    melodies = [dsp.randchoose(['c', 'g', 'a'])]
+    melodies = [[dsp.randchoose([1, 5, 6])]]
 
     if tel['density'] >= 4:
-        melodies += [ [ dsp.randchoose(['c', 'g', 'a']) for i in range(2) ] for m in range(dsp.randint(2, 4)) ]
+        melodies += [ [ dsp.randchoose([1, 5, 6]) for i in range(2) ] for m in range(dsp.randint(2, 4)) ]
 
     if tel['density'] >= 6:
-        melodies += [ [ dsp.randchoose(['c', 'd', 'e', 'g', 'a']) for i in range(dsp.randint(3, 6)) ] for m in range(dsp.randint(2, 5)) ]
+        melodies += [ [ dsp.randchoose([1, 2, 3, 5, 6]) for i in range(dsp.randint(3, 6)) ] for m in range(dsp.randint(2, 5)) ]
 
-    notes = dsp.randchoose(melodies)
+    try:
+        notes = dsp.randchoose(melodies)
+    except IndexError:
+        dsp.log(melodies)
+        notes = [1]
 
-    octave = (tel['register'] / 10.0) * 4 + 1
+    octave = int(round((tel['register'] / 10.0) * 4 + 1))
 
-    root        = p(voice_id, 'root', 27.5)
     bpm         = p(voice_id, 'bpm', 80.0)
 
     if 'ballsout' in tel['name']:
@@ -51,39 +54,21 @@ def play(voice_id):
     mod         = p(voice_id, 'mod', 'random')
     modFreq     = p(voice_id, 'modfreq', dsp.rand(1.0, 2.5) / dsp.fts(length))
 
-    modRange    = p(voice_id, 'speed', 0.01)
+    modRange    = dsp.rand(0.01, 0.04)
     modRange    = dsp.rand(0, modRange)
 
     pulsewidth = 1.0 / (tel['roughness'] / 10.0)
     pulsewidth -= dsp.rand(0, 0.09)
+    if pulsewidth < 0.1:
+        pulsewidth = 0.1
 
     beat = dsp.bpm2frames(bpm)
-
-    tune.a0 = float(root)
-    freqs   = [ tune.ntf(note, octave, ratios=tune.just) for note in notes ]
-
-
-    #####################
-    # SIREN
-    ##################### 
-    if 'ballsout' in tel['name']: 
-        waveform = dsp.wavetable([0] + [ dsp.rand(-1, 1) for w in range(10) ] + [0], 512)
-        window = dsp.wavetable([0] + [ dsp.rand(0, 1) for w in range(10) ] + [0], 512)
-
-        if tel['roughness'] >= 9:
-            waveform = dsp.wavetable([0] + [ dsp.rand(-1, 1) for w in range(50) ] + [0], 512)
-            window = dsp.wavetable([0] + [ dsp.rand(0, 1) for w in range(50) ] + [0], 512)
-
-        modRange = tel['harmonicity'] * 30
-        modFreq = tel['pace'] / 5.0
-
-        out = dsp.pulsar(2, length, pulsewidth, waveform, window, mod, modRange, modFreq, volume)
-        out = dsp.pan(out, dsp.rand())
-        out = dsp.amp(out, dsp.rand(0.3, 0.5))
-
-        dsp.log('siren!')
-        bot.show_telemetry(tel)
-        return out
+ 
+    try:
+        freqs   = tune.fromdegrees(notes, octave=octave, ratios=tune.just, root='c')
+    except TypeError:
+        print 'hm', notes, octave
+        freqs = tune.fromdegrees([1,5], octave=octave, ratios=tune.just, root='c')
 
     #####################
     # NORMAL 
@@ -93,30 +78,26 @@ def play(voice_id):
     if tel['roughness'] <= 2:
         window      = 'sine'
         waveform    = 'sine2pi'
-        if dsp.rand(0, 100) > 50:
-            minplen     = dsp.ftms(length / 4)
-            maxplen     = 30000
-        else:
-            minplen     = 5
-            maxplen     = 80
+        minplen     = dsp.ftms(length / 4)
+        maxplen     = 30000
 
     elif tel['roughness'] <= 4:
         window      = 'sine'
         waveform    = 'sine2pi'
         minplen     = 10
-        maxplen     = 80
+        maxplen     = 350
 
     elif tel['roughness'] > 4:
         window      = 'tri'
         waveform    = 'tri'
-        minplen     = 5 
-        maxplen     = 60
+        minplen     = 10 
+        maxplen     = 120
 
     elif tel['roughness'] >= 7:
         window      = 'vary'
-        waveform    = 'vary'
-        minplen     = 1
-        maxplen     = 40
+        waveform    = 'tri'
+        minplen     = 5
+        maxplen     = 80
 
     mod = dsp.wavetable(mod, 512)
     window = dsp.wavetable(window, 512)
@@ -130,28 +111,30 @@ def play(voice_id):
 
     bar = dsp.randint(4, 8)
 
-    if tel['density'] > 6:
+    dobeats = dsp.rand(0, 100) > 10
+
+    if tel['density'] > 4 and dobeats:
         numbeats = bar * dsp.randint(4, 8)
 
     while outlen < length:
         layers = []
 
-        if tel['density'] > 6:
-            plen = beat / dsp.randint(1, 8)
+        if tel['density'] > 4 and dobeats:
+            plen = beat / dsp.randint(2, 8)
         else:
             plen = dsp.mstf(dsp.rand(minplen, maxplen))
 
-        if tel['register'] >= 6 and tel['density'] >= 6:
-            maxo = int(dsp.rand(2, 6))
+        if tel['register'] >= 6 and tel['density'] >= 4:
+            maxo = dsp.randint(2, 6)
         else:
             maxo = 1
 
-        if tel['density'] > 6:
+        if tel['density'] > 4 and dobeats:
             freqs = dsp.randshuffle(freqs)
             for b in range(numbeats):
                 f = freqs[b % len(freqs)] 
                 if dsp.rand(0, 100) > 70:
-                    f *= 2**int(dsp.rand(0, maxo))
+                    f *= 2**dsp.randint(0, maxo)
 
                 b = dsp.pulsar(f, plen, pulsewidth, waveform, window, mod, modRange, modFreq, volume)
                 b = dsp.pan(b, dsp.rand())
@@ -162,14 +145,14 @@ def play(voice_id):
         else:
             for iff, freq in enumerate(freqs):
                 if 'gentle' in tel['name']:
-                    volume = dsp.rand(0.5, 0.7)
+                    volume = dsp.rand(0.5, 1)
                 elif 'upbeat' in tel['name']:
-                    volume = dsp.rand(0.5, 0.75)
+                    volume = dsp.rand(0.5, 0.9)
                 else:
-                    volume = dsp.rand(0.4, 0.6)
+                    volume = dsp.rand(0.4, 0.8)
 
-                if dsp.rand(0, 100) > 70:
-                    freq *= 2**int(dsp.rand(0, maxo))
+                if dsp.rand(0, 100) > 60:
+                    freq *= 2**dsp.randint(0, maxo)
 
                 layer = dsp.pulsar(freq, plen, pulsewidth, waveform, window, mod, modRange, modFreq, volume)
 
@@ -186,9 +169,8 @@ def play(voice_id):
 
     out = dsp.env(out, 'sine')
 
-    dsp.log((tel['harmonicity'] - 10) * -0.5)
-    #if dsp.flen(out) > dsp.mstf(100):
-        #out = dsp.drift(out, (tel['harmonicity'] - 10.0) * -1 * 0.02)
+    if dsp.flen(out) > dsp.mstf(100) and dsp.rand(0, 100) > 50:
+        out = dsp.drift(out, (tel['harmonicity'] - 10.0) * -1 * 0.03, dsp.randint(41, 441))
 
     dsp.log('')
     dsp.log('pulsar')

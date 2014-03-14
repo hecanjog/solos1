@@ -6,6 +6,7 @@ import multiprocessing as mp
 import pulsar
 import chirps
 import json
+import time
 
 """
 register: low - high
@@ -24,7 +25,7 @@ def mc(r, numpoints):
     return dsp.breakpoint([ dsp.rand(r[0], r[1]) for i in range(numlands) ], numpoints)
 
 def make_section(zone):
-    numpoints = dsp.randint(12, 48)
+    numpoints = dsp.randint(20, 30)
 
     zone['register'] = mc(zone['register'], numpoints)
     zone['density'] = mc(zone['density'], numpoints)
@@ -61,13 +62,6 @@ def make_telemetry():
             'roughness': (1, 2),
             'pace': (1, 3)
         }, {
-            'name': ['full'],
-            'register': (5, 7),
-            'density': (4, 6),
-            'harmonicity': (9, 10),
-            'roughness': (2, 5),
-            'pace': (3, 5)
-        }, {
             'name': ['ballsout'],
             'register': (1, 10),
             'density': (2, 10),
@@ -81,12 +75,19 @@ def make_telemetry():
             'harmonicity': (8, 10),
             'roughness': (2, 4),
             'pace': (4, 7)
+        }, {
+            'name': ['upbeat'],
+            'register': (5, 8),
+            'density': (1, 8),
+            'harmonicity': (8, 10),
+            'roughness': (2, 4),
+            'pace': (4, 7)
         },
     ]
 
     dsp.log('generating telemetry...')
 
-    numsections = dsp.randint(3, 12)
+    numsections = dsp.randint(10, 20)
     sections = []
 
     for s in range(numsections):
@@ -95,23 +96,25 @@ def make_telemetry():
         sections += section
 
         # Transition
-        if dsp.rand(0, 100) > 30:
+        if dsp.rand(0, 100) > 20:
             next_zone = dsp.randchoose(zones)
-            next_section = make_section(next_zone)
 
-            transition_zone = {
-                'name': ['transition', section[-1]['name'][0], next_section[0]['name'][0]],
-                'register': (section[-1]['register'], next_section[0]['register']),
-                'density': (section[-1]['density'], next_section[0]['density']),
-                'harmonicity': (section[-1]['harmonicity'], next_section[0]['harmonicity']),
-                'roughness': (section[-1]['roughness'], next_section[0]['roughness']),
-                'pace': (section[-1]['pace'], next_section[0]['pace']),
-            }
+            if next_zone['name'] != zone['name']:
+                next_section = make_section(next_zone)
 
-            transition_section = make_section(transition_zone)
+                transition_zone = {
+                    'name': ['transition', section[-1]['name'][0], next_section[0]['name'][0]],
+                    'register': (section[-1]['register'], next_section[0]['register']),
+                    'density': (section[-1]['density'], next_section[0]['density']),
+                    'harmonicity': (section[-1]['harmonicity'], next_section[0]['harmonicity']),
+                    'roughness': (section[-1]['roughness'], next_section[0]['roughness']),
+                    'pace': (section[-1]['pace'], next_section[0]['pace']),
+                }
 
-            sections += transition_section
-            sections += next_section
+                transition_section = make_section(transition_zone)
+
+                sections += transition_section
+                sections += next_section
 
 
     dsp.log('telemetry generated')
@@ -119,9 +122,10 @@ def make_telemetry():
 
 def run(gens, tick):
     dsp.log('telemetry up!')
+    started = time.time()
 
     def worker(gens, tick):
-        while True:
+        while time.time() < started + (60 * 15):
             dsp.delay(dsp.stf(dsp.rand(2, 20)))
 
             if dsp.rand(0, 100) > 50:
@@ -129,18 +133,22 @@ def run(gens, tick):
                     voice_id, generator_name = settings.add_voice('pp re qu')
                     dsp.log('starting pulsar voice %s' % voice_id)
                 else:
-                    voice_id, generator_name = settings.add_voice('ch re qu')
+                    if dsp.rand(0, 100) > 50:
+                        voice_id, generator_name = settings.add_voice('ch re qu')
+                    else:
+                        voice_id, generator_name = settings.add_voice('ch qu')
+
                     dsp.log('starting chirp voice %s' % voice_id)
 
                 playback_process = mp.Process(name=voice_id, target=rt.out, args=(gens[generator_name], tick))
                 playback_process.start()
 
-                dsp.delay(dsp.stf(dsp.rand(6, 20)))
+                dsp.delay(dsp.stf(dsp.rand(6, 35)))
 
                 dsp.log('stopping voice %s' % voice_id)
                 settings.voice(voice_id, 'loop', 0)
 
-    for w in range(15):
+    for w in range(10):
         # Spawn worker
         worker_process = mp.Process(name='worker', target=worker, args=(gens, tick))
         worker_process.start()
