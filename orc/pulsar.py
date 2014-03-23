@@ -36,7 +36,10 @@ def play(voice_id):
         dsp.log(melodies)
         notes = [1]
 
-    octave = int(round((tel['register'] / 10.0) * dsp.randint(1, 3) + 1))
+    if tel['harmonicity'] <= 5:
+        octave = (tel['register'] / 10.0) * dsp.randint(1, 3) + 1
+    else:
+        octave = int(round((tel['register'] / 10.0) * dsp.randint(1, 3) + 1))
 
     bpm         = p(voice_id, 'bpm', 80.0)
 
@@ -111,7 +114,7 @@ def play(voice_id):
 
     bar = dsp.randint(4, 8)
 
-    dobeats = tel['density'] > 5.5 and dsp.rand(0, 100) > 10
+    dobeats = tel['density'] > 5 and dsp.rand(0, 100) > 20
 
     if dobeats:
         numbeats = bar * dsp.randint(3, 7)
@@ -145,13 +148,13 @@ def play(voice_id):
         else:
             for iff, freq in enumerate(freqs):
                 if 'gentle' in tel['name']:
-                    volume = dsp.rand(0.5, 0.85)
+                    volume = dsp.rand(0.5, 0.6)
                 elif 'sparse' in tel['name']:
                     volume = dsp.rand(0.3, 0.6)
                 elif 'upbeat' in tel['name'] or 'ballsout' in tel['name']:
-                    volume = dsp.rand(0.5, 0.7)
+                    volume = dsp.rand(0.5, 0.6)
                 else:
-                    volume = dsp.rand(0.4, 0.7)
+                    volume = dsp.rand(0.4, 0.6)
 
                 if dsp.rand(0, 100) > 60:
                     freq *= 2**dsp.randint(0, maxo)
@@ -172,7 +175,7 @@ def play(voice_id):
     out = dsp.env(out, 'sine')
 
     #if dsp.flen(out) > dsp.mstf(100) and dsp.rand(0, 100) > 50:
-        #out = dsp.drift(out, (tel['harmonicity'] - 10.0) * -1 * 0.02, dsp.randint(41, 441))
+        #out = dsp.drift(out, (tel['harmonicity'] - 10.0) * -1 * 0.1, dsp.randint(4, 441))
 
     dsp.log('')
     dsp.log('pulsar')

@@ -20,7 +20,7 @@ def play(voice_id):
     def makecurve(length):
         # freq, length, pulsewidth, waveform, window, mod, modRange, modFreq, amp
 
-        wf = dsp.breakpoint([0] + [ dsp.rand(-1, 1) for i in range(int(dsp.rand(5, 10))) ] + [0], 1024)
+        wf = dsp.breakpoint([0] + [ dsp.rand(-1, 1) for i in range(int(dsp.rand(5, 30))) ] + [0], 1024)
         win = dsp.breakpoint([0] + [ dsp.rand(0, 1) for i in range(4) ] + [0], 1024)
         mod = dsp.breakpoint([ dsp.rand(0, 1) for i in range(int(dsp.rand(4, 8))) ], 1024)
 
@@ -30,7 +30,7 @@ def play(voice_id):
         pw = dsp.rand(0.1, 1.0)
 
         if 'upbeat' in tel['name']:
-            wf = dsp.breakpoint([0] + [ dsp.rand(-1, 1) for i in range(int(dsp.rand(5, 10))) ] + [0], 1024)
+            wf = dsp.breakpoint([0] + [ dsp.rand(-1, 1) for i in range(int(dsp.rand(5, 30))) ] + [0], 1024)
             win = dsp.breakpoint([0] + [ dsp.rand(0, 1) for i in range(4) ] + [0], 1024)
             mod = dsp.breakpoint([ dsp.rand(0, 1) for i in range(int(dsp.rand(5, 80))) ], 1024)
 
@@ -47,8 +47,8 @@ def play(voice_id):
             amp = dsp.rand(0.7, 3)
 
         freq = tel['register'] * tel['roughness'] * (tel['density'] * tel['pace'] * 0.25)
-        if dsp.rand(0, 100) > 50:
-            freq = dsp.rand(2, 200)
+        #if dsp.rand(0, 100) > 50:
+            #freq = dsp.rand(2, 20)
 
         modR = tel['harmonicity']
         modF= tel['pace'] / 10.0
@@ -110,8 +110,8 @@ def play(voice_id):
 
     out = makecurve(length)
 
-    if dsp.flen(out) > dsp.mstf(100) and dsp.rand(0, 100) > 20:
-        out = dsp.drift(out, (tel['harmonicity'] - 10.0) * -1 * 0.1, dsp.randint(41, 441))
+    if dsp.flen(out) > dsp.mstf(100) and dsp.rand(0, 100) > 30:
+        out = dsp.drift(out, (tel['harmonicity'] - 10.0) * -1 * 0.5, dsp.randint(41, 441))
 
     if dsp.flen(out) > dsp.stf(10):
         out = dsp.fill(out, dsp.stf(10))
