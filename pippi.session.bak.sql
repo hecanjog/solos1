@@ -86,8 +86,4 @@ CREATE TABLE generators (
     name text,
     shortname text
 );
-INSERT INTO "generators" VALUES(1,'bell','be');
-INSERT INTO "generators" VALUES(2,'pulsar','pp');
-INSERT INTO "generators" VALUES(3,'chirp','ch');
-INSERT INTO "generators" VALUES(4,'click','cl');
 COMMIT;

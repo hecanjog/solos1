@@ -3,7 +3,7 @@ from pippi import tune
 from pippic.settings import get_param as p
 from pippic.settings import voice as vp
 from pippic.settings import shared
-import geodes as bot
+import solo1 as bot
 
 shortname   = 'pp'
 name        = 'pulsar'
